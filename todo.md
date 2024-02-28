@@ -1,6 +1,6 @@
 # Todo
 
-## What can this POC become?
+## In no particular order
 
 - Completely rewrite the server & streaming logic
 - Grab client meta data
