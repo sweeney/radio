@@ -6,8 +6,7 @@ WORKDIR /usr/src/app
 
 COPY go.mod ./
 COPY *.go ./
-COPY ./tracks ./tracks
-
+COPY *.xml ./
 
 RUN go mod download && go mod verify
 RUN CGO_ENABLED=0 GOOS=linux go build -o /radio
