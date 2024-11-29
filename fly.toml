@@ -7,6 +7,8 @@ app = "sweeney-radio-poc"
 primary_region = "lhr"
 
 [build]
+  [build.args]
+    GO_VERSION = '1.23.3'
 
 [http_service]
   internal_port = 3000
