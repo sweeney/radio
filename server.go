@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -243,8 +244,8 @@ func main() {
 		}()
 
 		w.Header().Set("Content-Type", "audio/mpeg")
-//		w.Header().Set("Cache-Control", "no-cache, no-store")
-                w.Header().Set("Cache-Control", "cache-control: max-age=1, must-revalidate")
+		//		w.Header().Set("Cache-Control", "no-cache, no-store")
+		w.Header().Set("Cache-Control", "cache-control: max-age=1, must-revalidate")
 		w.Header().Set("icy-br", "128")
 		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
 		w.Header().Set("icy-name", "Radio Sween")
@@ -275,8 +276,9 @@ func main() {
 	})
 
 	server.server = &http.Server{
-		Addr:    fmt.Sprintf(":%d", *port),
-		Handler: mux,
+		Addr:         fmt.Sprintf(":%d", *port),
+		Handler:      mux,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 
 	sigChan := make(chan os.Signal, 1)
