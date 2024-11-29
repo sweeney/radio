@@ -5,12 +5,37 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
+
+func getClientIP(r *http.Request) string {
+	// Try X-Forwarded-For header first
+	forwardedFor := r.Header.Get("X-Forwarded-For")
+	if forwardedFor != "" {
+		// X-Forwarded-For can contain multiple IPs, take the first one
+		ips := strings.Split(forwardedFor, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	// Try X-Real-IP header next
+	realIP := r.Header.Get("X-Real-IP")
+	if realIP != "" {
+		return realIP
+	}
+
+	// Fall back to RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
+}
 
 func NewStreamServer() *StreamServer {
 	return &StreamServer{
@@ -94,6 +119,11 @@ func (s *StreamServer) GetCurrentFrame() []byte {
 	return episode.frames[episode.position].data
 }
 
+func calculateFrameDuration(frame MP3Frame) time.Duration {
+	frameDuration := float64(frame.header.frameSize*8) / float64(frame.header.bitrate) * float64(time.Second)
+	return time.Duration(frameDuration)
+}
+
 func (s *StreamServer) StartStreaming(feedPath string) {
 	if err := s.episodeManager.LoadFeed(feedPath); err != nil {
 		log.Fatalf("Error loading podcast feed: %v", err)
@@ -103,17 +133,16 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 		log.Fatal("No valid episodes found in feed")
 	}
 
-	// Start the background downloader
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	s.episodeManager.StartDownloading(ctx)
 
-	// Download first episode before starting
 	if err := s.episodeManager.downloadEpisode(0); err != nil {
 		log.Fatalf("Error downloading first episode: %v", err)
 	}
 
-	frameTiming := time.Millisecond * 26
+	var lastFrameTime time.Time
+	var frameDuration time.Duration
 
 	for {
 		select {
@@ -125,11 +154,9 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 			currentEpisode := &s.episodeManager.episodes[s.episodeManager.currentIndex]
 
 			if currentEpisode.position >= len(currentEpisode.frames) {
-				// Move to next episode
 				currentEpisode.position = 0
 				nextIndex := (s.episodeManager.currentIndex + 1) % len(s.episodeManager.episodes)
 
-				// Make sure next episode is ready
 				if s.episodeManager.episodes[nextIndex].data == nil {
 					s.episodeManager.mutex.RUnlock()
 					log.Printf("Waiting for next episode to download...")
@@ -137,7 +164,6 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 					continue
 				}
 
-				// Clean up previous episode
 				if s.episodeManager.currentIndex > 0 {
 					prevIndex := (s.episodeManager.currentIndex - 1)
 					s.episodeManager.episodes[prevIndex].data = nil
@@ -146,12 +172,25 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 
 				s.episodeManager.currentIndex = nextIndex
 				log.Printf("Moving to next episode: %s", s.episodeManager.episodes[nextIndex].item.Title)
+				lastFrameTime = time.Time{}
 				s.episodeManager.mutex.RUnlock()
 				continue
 			}
 
+			frame := currentEpisode.frames[currentEpisode.position]
+			frameDuration = calculateFrameDuration(frame)
+
+			if lastFrameTime.IsZero() {
+				lastFrameTime = time.Now()
+			} else {
+				sleepTime := frameDuration - time.Since(lastFrameTime)
+				if sleepTime > 0 {
+					time.Sleep(sleepTime)
+				}
+				lastFrameTime = time.Now()
+			}
+
 			s.NotifyClients()
-			time.Sleep(frameTiming)
 			currentEpisode.position++
 			s.episodeManager.mutex.RUnlock()
 		}
@@ -223,7 +262,7 @@ func main() {
 		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
 		w.Header().Set("icy-name", "Radio Sween")
 
-		clientCh := server.AddClient(r.RemoteAddr)
+		clientCh := server.AddClient(getClientIP(r))
 		defer server.RemoveClient(clientCh)
 
 		for {
@@ -242,7 +281,7 @@ func main() {
 			case <-done:
 				return
 			case <-server.shutdown:
-				log.Printf("Server shutdown, closing client %s", r.RemoteAddr)
+				log.Printf("Server shutdown, closing client %s", getClientIP(r))
 				return
 			}
 		}
