@@ -122,14 +122,7 @@ func (em *EpisodeManager) downloadEpisode(index int) error {
 	episode.position = 0
 	em.mutex.Unlock()
 
-	// Log the first frame's details for debugging
-	if len(frames) > 0 {
-		header := frames[0].header
-		frameDuration := float64(header.frameSize*8) / float64(header.bitrate) * 1000
-		log.Printf("Successfully downloaded episode: %s (%d frames, bitrate: %d, sample rate: %d, frame duration: %.2fms)",
-			episode.item.Title, len(frames), header.bitrate, header.sampleRate, frameDuration)
-	}
-
+	log.Printf("Successfully downloaded episode: %s (%d frames)", episode.item.Title, len(frames))
 	return nil
 }
 
@@ -158,4 +151,36 @@ func (em *EpisodeManager) StartDownloading(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+func findNextFrame(data []byte, startPos int) int {
+	for i := startPos; i < len(data)-1; i++ {
+		if data[i] == 0xFF && (data[i+1] == 0xFB || data[i+1] == 0xFA) {
+			return i
+		}
+	}
+	return -1
+}
+
+func extractFrames(data []byte) []MP3Frame {
+	var frames []MP3Frame
+	pos := 0
+
+	for {
+		frameStart := findNextFrame(data, pos)
+		if frameStart == -1 || frameStart >= len(data)-4 {
+			break
+		}
+
+		nextFrameStart := findNextFrame(data, frameStart+2)
+		if nextFrameStart == -1 {
+			frames = append(frames, MP3Frame{data: data[frameStart:]})
+			break
+		}
+
+		frames = append(frames, MP3Frame{data: data[frameStart:nextFrameStart]})
+		pos = nextFrameStart
+	}
+
+	return frames
 }
