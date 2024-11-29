@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:ppg="http://bbc.co.uk/2009/01/ppgRss" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>Letter from America by Alistair Cooke: The Bush Jr Years (2001- 2004)</title>
+    <link>http://www.bbc.co.uk/programmes/p02p89g5</link>
+    <description>The 9/11 attacks, the war on terror and invasion of Iraq defined George W Bush’s first term. A fascinating social, cultural and political look at American life from Alistair Cooke</description>
+    <itunes:summary>The 9/11 attacks, the war on terror and invasion of Iraq defined George W Bush’s first term. A fascinating social, cultural and political look at American life from Alistair Cooke</itunes:summary>
+    <itunes:author>BBC Radio 4</itunes:author>
+    <itunes:owner>
+      <itunes:name>BBC</itunes:name>
+      <itunes:email>RadioMusic.Support@bbc.co.uk</itunes:email>
+    </itunes:owner>
+    <itunes:new-feed-url>https://podcasts.files.bbci.co.uk/p02p89g5.rss</itunes:new-feed-url>
+    <language>en</language>
+    <ppg:seriesDetails frequency="occasionally" daysLive="-1"/>
+    <ppg:systemRef systemId="pid.brand" key="p02p89g5"/>
+    <ppg:systemRef systemId="pid.genre" key="C00046"/>
+    <ppg:network id="radio4" name="BBC Radio 4"/>
+    <image>
+      <url>http://ichef.bbci.co.uk/images/ic/3000x3000/p02r4yrf.jpg</url>
+      <title>Letter from America by Alistair Cooke: The Bush Jr Years (2001- 2004)</title>
+      <link>http://www.bbc.co.uk/programmes/p02p89g5</link>
+    </image>
+    <itunes:image href="http://ichef.bbci.co.uk/images/ic/3000x3000/p02r4yrf.jpg"/>
+    <copyright>(C) BBC 2004</copyright>
+    <pubDate>Fri, 20 Feb 2004 21:00:00 +0000</pubDate>
+    <itunes:category text="Society &amp; Culture"/>
+    <itunes:explicit>no</itunes:explicit>
+    <media:rating scheme="urn:simple">nonadult</media:rating>
+    <atom:link href="http://www.bbc.co.uk/programmes/p02p89g5/episodes/downloads.rss" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Alistair Cooke's Last Letter</title>
+      <description>In Alistair Cooke's last letter, he considers how the war in Iraq is a key element in the run-up to the US Presidential Election.</description>
+      <itunes:subtitle>In his last letter, Alistair Cooke examines Iraq’s influence on the Presidential Election.</itunes:subtitle>
+      <itunes:summary>In Alistair Cooke's last letter, he considers how the war in Iraq is a key element in the run-up to the US Presidential Election.</itunes:summary>
+      <pubDate>Fri, 20 Feb 2004 21:00:00 +0000</pubDate>
+      <itunes:duration>795</itunes:duration>
+      <enclosure url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q624m.mp3" length="12720000" type="audio/mpeg"/>
+      <ppg:enclosureLegacy url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q624m.mp3" length="12720000" type="audio/mpeg"/>
+      <ppg:enclosureSecure url="https://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/https/vpid/p02q624m.mp3" length="12720000" type="audio/mpeg"/>
+      <guid isPermaLink="false">http://downloads.bbc.co.uk/podcasts/radio4/lfabushjr/lfabushjr_20040220-2100.mp3</guid>
+      <link>http://www.bbc.co.uk/programmes/p00sylxq</link>
+      <itunes:explicit>clean</itunes:explicit>
+      <media:content url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q624m.mp3" fileSize="12720000" type="audio/mpeg" medium="audio" expression="full" duration="795"/>
+      <itunes:author>BBC Radio 4</itunes:author>
+      <ppg:canonical>/programmes/p00sylxq</ppg:canonical>
+    </item>
+    <item>
+      <title>How WWI turned slimming into a fashion</title>
+      <description>Alistair Cooke recalls how slimming became fashionable during the food shortages that followed the First World War.</description>
+      <itunes:subtitle>How slimming became fashionable during the food shortages of the First World War.</itunes:subtitle>
+      <itunes:summary>Alistair Cooke recalls how slimming became fashionable during the food shortages that followed the First World War.</itunes:summary>
+      <pubDate>Fri, 13 Feb 2004 21:00:00 +0000</pubDate>
+      <itunes:duration>792</itunes:duration>
+      <enclosure url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q625g.mp3" length="12672000" type="audio/mpeg"/>
+      <ppg:enclosureLegacy url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q625g.mp3" length="12672000" type="audio/mpeg"/>
+      <ppg:enclosureSecure url="https://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/https/vpid/p02q625g.mp3" length="12672000" type="audio/mpeg"/>
+      <guid isPermaLink="false">http://downloads.bbc.co.uk/podcasts/radio4/lfabushjr/lfabushjr_20040213-2100.mp3</guid>
+      <link>http://www.bbc.co.uk/programmes/p00sgpr8</link>
+      <itunes:explicit>clean</itunes:explicit>
+      <media:content url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q625g.mp3" fileSize="12672000" type="audio/mpeg" medium="audio" expression="full" duration="792"/>
+      <itunes:author>BBC Radio 4</itunes:author>
+      <ppg:canonical>/programmes/p00sgpr8</ppg:canonical>
+    </item>
+    <item>
+      <title>Encounters with Intelligence </title>
+      <description>Alistair Cooke looks at the meaning of 'intelligence' and recounts how he was mistaken for a spy during World War II.</description>
+      <itunes:subtitle>Alistair Cooke remembers the time he was mistaken for a spy during World War II.</itunes:subtitle>
+      <itunes:summary>Alistair Cooke looks at the meaning of 'intelligence' and recounts how he was mistaken for a spy during World War II.</itunes:summary>
+      <pubDate>Fri, 06 Feb 2004 21:00:00 +0000</pubDate>
+      <itunes:duration>802</itunes:duration>
+      <enclosure url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q6260.mp3" length="12832000" type="audio/mpeg"/>
+      <ppg:enclosureLegacy url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q6260.mp3" length="12832000" type="audio/mpeg"/>
+      <ppg:enclosureSecure url="https://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/https/vpid/p02q6260.mp3" length="12832000" type="audio/mpeg"/>
+      <guid isPermaLink="false">http://downloads.bbc.co.uk/podcasts/radio4/lfabushjr/lfabushjr_20040206-2100.mp3</guid>
+      <link>http://www.bbc.co.uk/programmes/p00sx8vf</link>
+      <itunes:explicit>clean</itunes:explicit>
+      <media:content url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q6260.mp3" fileSize="12832000" type="audio/mpeg" medium="audio" expression="full" duration="802"/>
+      <itunes:author>BBC Radio 4</itunes:author>
+      <ppg:canonical>/programmes/p00sx8vf</ppg:canonical>
+    </item>
+    <item>
+      <title>Was Saddam a Threat or Not?</title>
+      <description>Alistair Cooke discusses the resignation of the US chief weapons inspector, Dr David Kay.</description>
+      <itunes:subtitle>Alistair Cooke discusses the resignation of the US chief weapons inspector, Dr David Kay.</itunes:subtitle>
+      <itunes:summary>Alistair Cooke discusses the resignation of the US chief weapons inspector, Dr David Kay.</itunes:summary>
+      <pubDate>Fri, 30 Jan 2004 21:00:00 +0000</pubDate>
+      <itunes:duration>788</itunes:duration>
+      <enclosure url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q626r.mp3" length="12608000" type="audio/mpeg"/>
+      <ppg:enclosureLegacy url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q626r.mp3" length="12608000" type="audio/mpeg"/>
+      <ppg:enclosureSecure url="https://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/https/vpid/p02q626r.mp3" length="12608000" type="audio/mpeg"/>
+      <guid isPermaLink="false">http://downloads.bbc.co.uk/podcasts/radio4/lfabushjr/lfabushjr_20040130-2100.mp3</guid>
+      <link>http://www.bbc.co.uk/programmes/p00sx8vp</link>
+      <itunes:explicit>clean</itunes:explicit>
+      <media:content url="http://open.live.bbc.co.uk/mediaselector/5/redir/version/2.0/mediaset/audio-nondrm-download/proto/http/vpid/p02q626r.mp3" fileSize="12608000" type="audio/mpeg" medium="audio" expression="full" duration="788"/>
+      <itunes:author>BBC Radio 4</itunes:author>
+      <ppg:canonical>/programmes/p00sx8vp</ppg:canonical>
+    </item>
+  </channel>
+</rss>
