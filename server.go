@@ -244,9 +244,9 @@ func main() {
 
 		w.Header().Set("Content-Type", "audio/mpeg")
 		w.Header().Set("Cache-Control", "no-cache, no-store")
-//		w.Header().Set("icy-br", "128")
-//		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
-		w.Header().Set("icy-name", "Podcast Stream")
+		w.Header().Set("icy-br", "128")
+		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
+		w.Header().Set("icy-name", "Radio Sween")
 
 		clientCh := server.AddClient(getClientIP(r))
 		defer server.RemoveClient(clientCh)
