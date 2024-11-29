@@ -7,9 +7,18 @@ import (
 	"time"
 )
 
-// MP3Frame represents a single MP3 frame
+// MP3Header represents parsed MP3 frame header information
+type MP3Header struct {
+	bitrate    int
+	sampleRate int
+	padding    int
+	frameSize  int
+}
+
+// MP3Frame represents a single MP3 frame with its header data
 type MP3Frame struct {
-	data []byte
+	data   []byte
+	header MP3Header
 }
 
 // RSS Feed structures for BBC podcast format
