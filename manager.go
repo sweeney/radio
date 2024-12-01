@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
 )
 
 func NewEpisodeManager() *EpisodeManager {
+	// Initialize random seed
+	rand.Seed(time.Now().UnixNano())
 	return &EpisodeManager{
 		episodes: make([]Episode, 0),
 	}
@@ -48,7 +51,12 @@ func (em *EpisodeManager) LoadFeed(feedPath string) error {
 		})
 	}
 
-	log.Printf("Loaded %d episodes from feed", len(em.episodes))
+	// Randomize episode order
+	rand.Shuffle(len(em.episodes), func(i, j int) {
+		em.episodes[i], em.episodes[j] = em.episodes[j], em.episodes[i]
+	})
+
+	log.Printf("Loaded and randomized %d episodes from feed", len(em.episodes))
 	return nil
 }
 
