@@ -129,7 +129,6 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 		log.Fatal("No valid episodes found in feed")
 	}
 
-	// Start the background downloader
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	s.episodeManager.StartDownloading(ctx)
@@ -151,17 +150,25 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 			currentEpisode := &s.episodeManager.episodes[s.episodeManager.currentIndex]
 
 			if currentEpisode.position >= len(currentEpisode.frames) {
-				// Move to next episode
-				currentEpisode.position = 0
+				// Prepare transition before modifying current episode
 				nextIndex := (s.episodeManager.currentIndex + 1) % len(s.episodeManager.episodes)
 
-				// Make sure next episode is ready
+				// Check next episode readiness before transitioning
 				if s.episodeManager.episodes[nextIndex].data == nil {
 					s.episodeManager.mutex.RUnlock()
 					log.Printf("Waiting for next episode to download...")
 					time.Sleep(time.Second)
 					continue
 				}
+
+				// Notify clients before transitioning to ensure last frame is sent
+				s.NotifyClients()
+
+				// Small delay to ensure last frame is processed
+				time.Sleep(frameTiming)
+
+				// Now handle the transition
+				currentEpisode.position = 0
 
 				// Clean up previous episode
 				if s.episodeManager.currentIndex > 0 {
@@ -245,7 +252,6 @@ func main() {
 
 		w.Header().Set("Content-Type", "audio/mpeg")
 		w.Header().Set("Cache-Control", "no-cache, no-store")
-		// w.Header().Set("Cache-Control", "cache-control: max-age=1, must-revalidate")
 		w.Header().Set("icy-br", "128")
 		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
 		w.Header().Set("icy-name", "Radio Sween")
