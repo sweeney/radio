@@ -53,8 +53,10 @@ func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if episodeLimit == 0 {
-		episodeLimit = s.defaultEpisodeLimit
+	// Store the original passed limit before potentially modifying it
+	actualLimit := episodeLimit
+	if actualLimit == 0 {
+		actualLimit = s.defaultEpisodeLimit
 	}
 
 	ch := make(chan struct{}, 1)
@@ -63,7 +65,7 @@ func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
 		address:      addr,
 		lastSeen:     time.Now(),
 		episodeCount: 0,
-		maxEpisodes:  episodeLimit,
+		maxEpisodes:  actualLimit,
 	}
 	s.addresses[addr] = s.addresses[addr] + 1
 
@@ -74,7 +76,7 @@ func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
 	}
 
 	log.Printf("New client connected from %s (limit: %d episodes, connections for this client: %d, unique clients: %d, total connections: %d)",
-		addr, episodeLimit, s.addresses[addr], uniqueClients, totalConns)
+		addr, actualLimit, s.addresses[addr], uniqueClients, totalConns)
 
 	s.activeConns.Add(1)
 	return ch
