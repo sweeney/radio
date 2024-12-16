@@ -133,7 +133,6 @@ func (s *StreamServer) GetCurrentFrame() []byte {
 
 func (s *StreamServer) incrementEpisodeCountsAndCheckLimits() {
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 
 	disconnectChannels := make([]chan struct{}, 0)
 
@@ -147,9 +146,9 @@ func (s *StreamServer) incrementEpisodeCountsAndCheckLimits() {
 		}
 	}
 
-	// Release the lock before processing disconnections
 	s.mutex.Unlock()
 
+	// Process disconnections after releasing the lock
 	for _, ch := range disconnectChannels {
 		s.RemoveClient(ch)
 	}
