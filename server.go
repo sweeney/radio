@@ -147,6 +147,9 @@ func (s *StreamServer) incrementEpisodeCountsAndCheckLimits() {
 		}
 	}
 
+	// Release the lock before processing disconnections
+	s.mutex.Unlock()
+
 	for _, ch := range disconnectChannels {
 		s.RemoveClient(ch)
 	}
