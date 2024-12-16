@@ -276,6 +276,11 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/listen", func(w http.ResponseWriter, r *http.Request) {
 
+		log.Printf("Full URL: %s", r.URL.String())
+		log.Printf("Raw Query: %s", r.URL.RawQuery)
+		log.Printf("Path: %s", r.URL.Path)
+		log.Printf("All Query Parameters: %v", r.URL.Query())
+
 		limit := 0 // Will use default if 0
 		if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 			log.Printf("limitStr=%s", limitStr)
