@@ -50,7 +50,6 @@ func NewStreamServer(defaultEpisodeLimit int) *StreamServer {
 }
 
 func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
-
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -219,6 +218,56 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 	}
 }
 
+func handleStream(w http.ResponseWriter, r *http.Request, server *StreamServer, clientCh chan struct{}, done chan struct{}) {
+	defer server.RemoveClient(clientCh)
+
+	// Write headers before starting stream
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.Header().Set("Cache-Control", "no-cache, no-store")
+	w.Header().Set("Connection", "close")
+	w.Header().Set("icy-br", "128")
+	w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
+	w.Header().Set("icy-name", "Radio Sween")
+
+	// Ensure headers are written
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
+	for {
+		select {
+		case <-clientCh:
+			frame := server.GetCurrentFrame()
+			if frame != nil {
+				if _, err := w.Write(frame); err != nil {
+					log.Printf("Write error for client %s: %v", getClientIP(r), err)
+					// Ensure any buffered data is sent before returning
+					if f, ok := w.(http.Flusher); ok {
+						f.Flush()
+					}
+					return
+				}
+				if f, ok := w.(http.Flusher); ok {
+					f.Flush()
+				}
+			}
+		case <-done:
+			log.Printf("Client %s disconnected normally", getClientIP(r))
+			// Ensure any remaining data is flushed before closing
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+			return
+		case <-server.shutdown:
+			log.Printf("Server shutdown, closing client %s", getClientIP(r))
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+			return
+		}
+	}
+}
+
 func (s *StreamServer) Shutdown() {
 	log.Println("Initiating shutdown...")
 
@@ -272,7 +321,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/listen", func(w http.ResponseWriter, r *http.Request) {
-
 		limit := 0 // Will use default if 0
 		if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 			if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit >= -1 {
@@ -286,34 +334,8 @@ func main() {
 			close(done)
 		}()
 
-		w.Header().Set("Content-Type", "audio/mpeg")
-		w.Header().Set("Cache-Control", "no-cache, no-store")
-		w.Header().Set("icy-br", "128")
-		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
-		w.Header().Set("icy-name", "Radio Sween")
-
 		clientCh := server.AddClient(getClientIP(r), limit)
-		defer server.RemoveClient(clientCh)
-
-		for {
-			select {
-			case <-clientCh:
-				frame := server.GetCurrentFrame()
-				if frame != nil {
-					if _, err := w.Write(frame); err != nil {
-						return
-					}
-					if f, ok := w.(http.Flusher); ok {
-						f.Flush()
-					}
-				}
-			case <-done:
-				return
-			case <-server.shutdown:
-				log.Printf("Server shutdown, closing client %s", getClientIP(r))
-				return
-			}
-		}
+		handleStream(w, r, server, clientCh, done)
 	})
 
 	server.server = &http.Server{
