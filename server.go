@@ -245,6 +245,35 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 	}
 }
 
+// Global variable to hold our silence frames
+var silentFrames []byte
+
+// LoadSilentFrames loads the MP3 silence file at startup
+func LoadSilentFrames() error {
+	var err error
+	silentFrames, err = os.ReadFile("./mp3/silence.mp3")
+	if err != nil {
+		return fmt.Errorf("failed to read silence.mp3: %v", err)
+	}
+	return nil
+}
+
+// sendTerminationFrames writes silent MP3 frames to gracefully end the stream
+func sendTerminationFrames(w http.ResponseWriter) {
+	if silentFrames == nil {
+		log.Printf("Silent frames not loaded, skipping termination frames")
+		return
+	}
+
+	w.Write(silentFrames)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+	// Small delay to allow the frames to be processed
+	log.Printf("Silence sent, small sleep...")
+	time.Sleep(time.Millisecond * 100)
+}
+
 // handleStream manages an individual client's audio stream
 // Ensures clean shutdown and proper resource cleanup
 func handleStream(w http.ResponseWriter, r *http.Request, server *StreamServer, clientCh chan struct{}, done chan struct{}) {
@@ -283,17 +312,12 @@ func handleStream(w http.ResponseWriter, r *http.Request, server *StreamServer, 
 				}
 			}
 		case <-done: // Client disconnected
+			sendTerminationFrames(w)
 			log.Printf("Client %s disconnected normally", getClientIP(r))
-			// Ensure any remaining data is flushed before closing
-			if f, ok := w.(http.Flusher); ok {
-				f.Flush()
-			}
 			return
 		case <-server.shutdown: // Server is shutting down
 			log.Printf("Server shutdown, closing client %s", getClientIP(r))
-			if f, ok := w.(http.Flusher); ok {
-				f.Flush()
-			}
+			sendTerminationFrames(w)
 			return
 		}
 	}
@@ -352,6 +376,11 @@ func main() {
 	// Verify feed file exists
 	if _, err := os.Stat(*feedPath); os.IsNotExist(err) {
 		log.Fatalf("Feed file does not exist: %s", *feedPath)
+	}
+
+	// Load silent frames
+	if err := LoadSilentFrames(); err != nil {
+		log.Fatalf("Failed to load silence.mp3: %v", err)
 	}
 
 	// Create and initialize server
