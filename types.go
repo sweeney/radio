@@ -97,9 +97,11 @@ type Episode struct {
 
 // Client represents a connected streaming client
 type Client struct {
-	ch       chan struct{}
-	address  string
-	lastSeen time.Time
+	ch           chan struct{}
+	address      string
+	lastSeen     time.Time
+	episodeCount int // Track number of episodes listened to
+	maxEpisodes  int // Maximum number of episodes allowed (-1 for unlimited)
 }
 
 // EpisodeManager handles episode downloading and buffering
@@ -112,11 +114,12 @@ type EpisodeManager struct {
 
 // StreamServer handles client connections and streaming
 type StreamServer struct {
-	episodeManager *EpisodeManager
-	clients        map[chan struct{}]*Client
-	addresses      map[string]int
-	mutex          sync.RWMutex
-	shutdown       chan struct{}
-	server         *http.Server
-	activeConns    sync.WaitGroup
+	episodeManager      *EpisodeManager
+	clients             map[chan struct{}]*Client
+	addresses           map[string]int
+	mutex               sync.RWMutex
+	shutdown            chan struct{}
+	server              *http.Server
+	activeConns         sync.WaitGroup
+	defaultEpisodeLimit int
 }
