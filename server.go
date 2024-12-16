@@ -50,7 +50,6 @@ func NewStreamServer(defaultEpisodeLimit int) *StreamServer {
 }
 
 func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
-	log.Printf("Add Client given limit=%d", episodeLimit)
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -60,8 +59,6 @@ func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
 	if actualLimit == 0 {
 		actualLimit = s.defaultEpisodeLimit
 	}
-
-	log.Printf("using limit=%d", actualLimit)
 
 	ch := make(chan struct{}, 1)
 	s.clients[ch] = &Client{
@@ -265,8 +262,6 @@ func main() {
 	episodeLimit := flag.Int("episode-limit", 3, "Default number of episodes before client disconnect (-1 for unlimited)")
 	flag.Parse()
 
-	log.Printf("Startup limit=%d", *episodeLimit)
-
 	if _, err := os.Stat(*feedPath); os.IsNotExist(err) {
 		log.Fatalf("Feed file does not exist: %s", *feedPath)
 	}
@@ -276,20 +271,10 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/listen", func(w http.ResponseWriter, r *http.Request) {
 
-		log.Printf("Full URL: %s", r.URL.String())
-		log.Printf("Raw Query: %s", r.URL.RawQuery)
-		log.Printf("Path: %s", r.URL.Path)
-		log.Printf("All Query Parameters: %v", r.URL.Query())
-
 		limit := 0 // Will use default if 0
 		if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-			log.Printf("limitStr=%s", limitStr)
-
 			if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit >= -1 {
-
 				limit = parsedLimit
-				log.Printf("parsedlimit=%d", limit)
-
 			}
 		}
 
