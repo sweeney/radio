@@ -100,9 +100,6 @@ func (s *StreamServer) RemoveClient(ch chan struct{}) {
 	if client, exists := s.clients[ch]; exists {
 		addr := client.address
 
-		// Signal termination first
-		close(client.done)
-
 		// Decrease connection count for this IP
 		s.addresses[addr]--
 		if s.addresses[addr] <= 0 {
