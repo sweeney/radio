@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -38,24 +39,31 @@ func getClientIP(r *http.Request) string {
 	return ip
 }
 
-func NewStreamServer() *StreamServer {
+func NewStreamServer(defaultEpisodeLimit int) *StreamServer {
 	return &StreamServer{
-		episodeManager: NewEpisodeManager(),
-		clients:        make(map[chan struct{}]*Client),
-		addresses:      make(map[string]int),
-		shutdown:       make(chan struct{}),
+		episodeManager:      NewEpisodeManager(),
+		clients:             make(map[chan struct{}]*Client),
+		addresses:           make(map[string]int),
+		shutdown:            make(chan struct{}),
+		defaultEpisodeLimit: defaultEpisodeLimit,
 	}
 }
 
-func (s *StreamServer) AddClient(addr string) chan struct{} {
+func (s *StreamServer) AddClient(addr string, episodeLimit int) chan struct{} {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	if episodeLimit == 0 {
+		episodeLimit = s.defaultEpisodeLimit
+	}
+
 	ch := make(chan struct{}, 1)
 	s.clients[ch] = &Client{
-		ch:       ch,
-		address:  addr,
-		lastSeen: time.Now(),
+		ch:           ch,
+		address:      addr,
+		lastSeen:     time.Now(),
+		episodeCount: 0,
+		maxEpisodes:  episodeLimit,
 	}
 	s.addresses[addr] = s.addresses[addr] + 1
 
@@ -65,8 +73,8 @@ func (s *StreamServer) AddClient(addr string) chan struct{} {
 		totalConns += count
 	}
 
-	log.Printf("New client connected from %s (connections for this client: %d, unique clients: %d, total connections: %d)",
-		addr, s.addresses[addr], uniqueClients, totalConns)
+	log.Printf("New client connected from %s (limit: %d episodes, connections for this client: %d, unique clients: %d, total connections: %d)",
+		addr, episodeLimit, s.addresses[addr], uniqueClients, totalConns)
 
 	s.activeConns.Add(1)
 	return ch
@@ -120,6 +128,27 @@ func (s *StreamServer) GetCurrentFrame() []byte {
 	return episode.frames[episode.position].data
 }
 
+func (s *StreamServer) incrementEpisodeCountsAndCheckLimits() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	disconnectChannels := make([]chan struct{}, 0)
+
+	for ch, client := range s.clients {
+		client.episodeCount++
+
+		if client.maxEpisodes > 0 && client.episodeCount >= client.maxEpisodes {
+			log.Printf("Client %s reached episode limit (%d), marking for disconnect",
+				client.address, client.maxEpisodes)
+			disconnectChannels = append(disconnectChannels, ch)
+		}
+	}
+
+	for _, ch := range disconnectChannels {
+		s.RemoveClient(ch)
+	}
+}
+
 func (s *StreamServer) StartStreaming(feedPath string) {
 	if err := s.episodeManager.LoadFeed(feedPath); err != nil {
 		log.Fatalf("Error loading podcast feed: %v", err)
@@ -150,10 +179,8 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 			currentEpisode := &s.episodeManager.episodes[s.episodeManager.currentIndex]
 
 			if currentEpisode.position >= len(currentEpisode.frames) {
-				// Prepare transition before modifying current episode
 				nextIndex := (s.episodeManager.currentIndex + 1) % len(s.episodeManager.episodes)
 
-				// Check next episode readiness before transitioning
 				if s.episodeManager.episodes[nextIndex].data == nil {
 					s.episodeManager.mutex.RUnlock()
 					log.Printf("Waiting for next episode to download...")
@@ -161,21 +188,17 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 					continue
 				}
 
-				// Notify clients before transitioning to ensure last frame is sent
 				s.NotifyClients()
-
-				// Small delay to ensure last frame is processed
 				time.Sleep(frameTiming)
-
-				// Now handle the transition
 				currentEpisode.position = 0
 
-				// Clean up previous episode
 				if s.episodeManager.currentIndex > 0 {
 					prevIndex := (s.episodeManager.currentIndex - 1)
 					s.episodeManager.episodes[prevIndex].data = nil
 					s.episodeManager.episodes[prevIndex].frames = nil
 				}
+
+				s.incrementEpisodeCountsAndCheckLimits()
 
 				s.episodeManager.currentIndex = nextIndex
 				log.Printf("Moving to next episode: %s", s.episodeManager.episodes[nextIndex].item.Title)
@@ -233,18 +256,25 @@ func (s *StreamServer) Shutdown() {
 func main() {
 	feedPath := flag.String("feed", "pod.xml", "Path to the podcast RSS feed XML file")
 	port := flag.Int("port", 3000, "Port to listen on")
+	episodeLimit := flag.Int("episode-limit", 3, "Default number of episodes before client disconnect (-1 for unlimited)")
 	flag.Parse()
 
 	if _, err := os.Stat(*feedPath); os.IsNotExist(err) {
 		log.Fatalf("Feed file does not exist: %s", *feedPath)
 	}
 
-	server := NewStreamServer()
+	server := NewStreamServer(*episodeLimit)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/listen", func(w http.ResponseWriter, r *http.Request) {
-		done := make(chan struct{})
+		limit := 0 // Will use default if 0
+		if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+			if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit >= -1 {
+				limit = parsedLimit
+			}
+		}
 
+		done := make(chan struct{})
 		go func() {
 			<-r.Context().Done()
 			close(done)
@@ -256,7 +286,7 @@ func main() {
 		w.Header().Set("ice-audio-info", "channels=2;samplerate=44100;bitrate=128")
 		w.Header().Set("icy-name", "Radio Sween")
 
-		clientCh := server.AddClient(getClientIP(r))
+		clientCh := server.AddClient(getClientIP(r), limit)
 		defer server.RemoveClient(clientCh)
 
 		for {
@@ -264,8 +294,7 @@ func main() {
 			case <-clientCh:
 				frame := server.GetCurrentFrame()
 				if frame != nil {
-					_, err := w.Write(frame)
-					if err != nil {
+					if _, err := w.Write(frame); err != nil {
 						return
 					}
 					if f, ok := w.(http.Flusher); ok {
