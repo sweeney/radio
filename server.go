@@ -246,8 +246,9 @@ func (s *StreamServer) StartStreaming(feedPath string) {
 	}
 }
 
-// Global variable to hold our silence frames
+// Global variables to hold our audio frames
 var silentFrames []byte
+var shutdownFrames []byte
 
 // LoadSilentFrames loads the MP3 silence file at startup
 func LoadSilentFrames() error {
@@ -255,6 +256,16 @@ func LoadSilentFrames() error {
 	silentFrames, err = os.ReadFile("./mp3/silence.mp3")
 	if err != nil {
 		return fmt.Errorf("failed to read silence.mp3: %v", err)
+	}
+	return nil
+}
+
+// LoadShutdownFrames loads the MP3 shutdown file at startup
+func LoadShutdownFrames() error {
+	var err error
+	shutdownFrames, err = os.ReadFile("./shutdown.mp3")
+	if err != nil {
+		return fmt.Errorf("failed to read shutdown.mp3: %v", err)
 	}
 	return nil
 }
@@ -273,6 +284,22 @@ func sendTerminationFrames(w http.ResponseWriter) {
 	// Small delay to allow the frames to be processed
 	log.Printf("Silence sent, small sleep...")
 	time.Sleep(time.Millisecond * 100)
+}
+
+// sendShutdownFrames writes shutdown MP3 frames to all clients before server shutdown
+func sendShutdownFrames(w http.ResponseWriter) {
+	if shutdownFrames == nil {
+		log.Printf("Shutdown frames not loaded, skipping shutdown audio")
+		return
+	}
+
+	log.Printf("Playing shutdown audio...")
+	w.Write(shutdownFrames)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+	// Allow time for shutdown audio to play
+	time.Sleep(time.Second * 2)
 }
 
 // handleStream manages an individual client's audio stream
@@ -318,7 +345,7 @@ func handleStream(w http.ResponseWriter, r *http.Request, server *StreamServer, 
 			return
 		case <-server.shutdown: // Server is shutting down
 			log.Printf("Server shutdown, closing client %s", getClientIP(r))
-			sendTerminationFrames(w)
+			sendShutdownFrames(w)
 			return
 		}
 	}
@@ -379,9 +406,12 @@ func main() {
 		log.Fatalf("Feed file does not exist: %s", *feedPath)
 	}
 
-	// Load silent frames
+	// Load audio frames
 	if err := LoadSilentFrames(); err != nil {
 		log.Fatalf("Failed to load silence.mp3: %v", err)
+	}
+	if err := LoadShutdownFrames(); err != nil {
+		log.Fatalf("Failed to load shutdown.mp3: %v", err)
 	}
 
 	// Create and initialize server
